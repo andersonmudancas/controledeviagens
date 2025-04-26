@@ -3,25 +3,83 @@
 <head>
   <meta charset="UTF-8" />
   <title>Controle de Viagens</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <style>
-    body { font-family: Arial; margin: 20px; }
-    input, button { margin: 5px; padding: 8px; width: 200px; }
-    table { border-collapse: collapse; margin-top: 20px; width: 100%; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-    #resumo { background: #f2f2f2; padding: 15px; margin-top: 20px; border: 1px solid #ccc; }
-    #resumo h2 { margin-top: 0; }
-    #grafico-container { margin-top: 30px; }
+    body { font-family: Arial, sans-serif; margin: 20px; background: #eef2f3; }
+
+    .formulario {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .formulario input, .formulario button {
+      flex: 1 1 250px;
+      min-width: 200px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+
+    button {
+      background-color: #4caf50;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+
+    #resumo {
+      background: #f9f9f9;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
+      margin-top: 20px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      background: white;
+      border-radius: 10px;
+      overflow-x: auto;
+      display: block;
+      box-shadow: 0px 0px 10px rgba(0,0,0,0.05);
+    }
+
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    #busca {
+      width: 100%;
+      margin: 20px 0;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+
+    #grafico-container {
+      margin-top: 30px;
+    }
   </style>
 
-  <!-- SheetJS para Excel -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <!-- Chart.js para gráficos -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
   <h1>Controle de Viagens</h1>
 
-  <div>
+  <div class="formulario">
     <input id="cliente" placeholder="Nome do Cliente" />
     <input id="contato" placeholder="Contato" />
     <input id="data" type="date" />
@@ -39,7 +97,8 @@
     <button onclick="limparTabela()">Limpar Tabela</button>
   </div>
 
-  <!-- RESUMO -->
+  <input type="text" id="busca" placeholder="Buscar por Cliente, Origem ou Destino" onkeyup="filtrarTabela()" />
+
   <div id="resumo">
     <h2>Resumo</h2>
     <p>Total de Viagens: <span id="resumo-viagens">0</span></p>
@@ -50,7 +109,6 @@
     <p>Total de Saldo Final: R$ <span id="resumo-saldo">0.00</span></p>
   </div>
 
-  <!-- TABELA -->
   <table id="tabela">
     <thead>
       <tr>
@@ -72,166 +130,159 @@
     <tbody></tbody>
   </table>
 
-  <!-- GRÁFICO -->
   <div id="grafico-container">
     <canvas id="graficoResumo" height="120"></canvas>
   </div>
 
-  <script>
-    let chart;
+<script>
+let chart;
 
-    function adicionarViagem() {
-      const cliente = document.getElementById("cliente").value;
-      const contato = document.getElementById("contato").value;
-      const data = document.getElementById("data").value;
-      const origem = document.getElementById("origem").value;
-      const destino = document.getElementById("destino").value;
-      const kmInicial = parseFloat(document.getElementById("kmInicial").value);
-      const kmFinal = parseFloat(document.getElementById("kmFinal").value);
-      const combustivel = parseFloat(document.getElementById("combustivel").value);
-      const pedagios = parseFloat(document.getElementById("pedagios").value);
-      const outros = parseFloat(document.getElementById("outros").value);
-      const ajudante = parseFloat(document.getElementById("ajudante").value);
-      const frete = parseFloat(document.getElementById("frete").value);
+function adicionarViagem() {
+  const cliente = document.getElementById("cliente").value;
+  const contato = document.getElementById("contato").value;
+  const data = document.getElementById("data").value;
+  const origem = document.getElementById("origem").value;
+  const destino = document.getElementById("destino").value;
+  const kmInicial = parseFloat(document.getElementById("kmInicial").value);
+  const kmFinal = parseFloat(document.getElementById("kmFinal").value);
+  const combustivel = parseFloat(document.getElementById("combustivel").value);
+  const pedagios = parseFloat(document.getElementById("pedagios").value);
+  const outros = parseFloat(document.getElementById("outros").value);
+  const ajudante = parseFloat(document.getElementById("ajudante").value);
+  const frete = parseFloat(document.getElementById("frete").value);
 
-      if (
-        isNaN(kmInicial) || isNaN(kmFinal) || isNaN(combustivel) ||
-        isNaN(pedagios) || isNaN(outros) || isNaN(ajudante) || isNaN(frete)
-      ) {
-        alert("Por favor, preencha todos os campos corretamente.");
-        return;
-      }
+  if (isNaN(kmInicial) || isNaN(kmFinal) || isNaN(combustivel) || isNaN(pedagios) || isNaN(outros) || isNaN(ajudante) || isNaN(frete)) {
+    alert("Por favor, preencha todos os campos corretamente.");
+    return;
+  }
+  if (kmFinal < kmInicial) {
+    alert("KM Final não pode ser menor que o KM Inicial.");
+    return;
+  }
 
-      if (kmFinal < kmInicial) {
-        alert("KM Final não pode ser menor que o KM Inicial.");
-        return;
-      }
+  const kmRodado = kmFinal - kmInicial;
+  const totalGastos = combustivel + pedagios + outros + ajudante;
+  const custoPorKm = kmRodado > 0 ? (totalGastos / kmRodado).toFixed(2) : "0.00";
+  const saldoFinal = (frete - totalGastos).toFixed(2);
+  const dataFormatada = new Date(data).toLocaleDateString("pt-BR");
 
-      const kmRodado = kmFinal - kmInicial;
-      const totalGastos = combustivel + pedagios + outros + ajudante;
-      const custoPorKm = kmRodado > 0 ? (totalGastos / kmRodado).toFixed(2) : "0.00";
-      const saldoFinal = (frete - totalGastos).toFixed(2);
-      const dataFormatada = new Date(data).toLocaleDateString("pt-BR");
+  const row = `<tr>
+    <td>${cliente}</td><td>${contato}</td><td>${dataFormatada}</td>
+    <td>${origem} → ${destino}</td><td>${kmRodado} km</td>
+    <td>R$ ${combustivel.toFixed(2)}</td><td>R$ ${pedagios.toFixed(2)}</td>
+    <td>R$ ${outros.toFixed(2)}</td><td>R$ ${ajudante.toFixed(2)}</td>
+    <td>R$ ${totalGastos.toFixed(2)}</td><td>R$ ${custoPorKm}</td>
+    <td>R$ ${frete.toFixed(2)}</td><td>R$ ${saldoFinal}</td>
+  </tr>`;
 
-      const row = `
-        <tr>
-          <td>${cliente}</td>
-          <td>${contato}</td>
-          <td>${dataFormatada}</td>
-          <td>${origem} → ${destino}</td>
-          <td>${kmRodado} km</td>
-          <td>R$ ${combustivel.toFixed(2)}</td>
-          <td>R$ ${pedagios.toFixed(2)}</td>
-          <td>R$ ${outros.toFixed(2)}</td>
-          <td>R$ ${ajudante.toFixed(2)}</td>
-          <td>R$ ${totalGastos.toFixed(2)}</td>
-          <td>R$ ${custoPorKm}</td>
-          <td>R$ ${frete.toFixed(2)}</td>
-          <td>R$ ${saldoFinal}</td>
-        </tr>
-      `;
+  document.querySelector("#tabela tbody").insertAdjacentHTML("beforeend", row);
+  document.querySelectorAll("input").forEach((input) => (input.value = ""));
+  localStorage.removeItem("formTemp");
+  salvarDadosLocalmente();
+  atualizarResumo();
+}
 
-      document.querySelector("#tabela tbody").insertAdjacentHTML("beforeend", row);
-      document.querySelectorAll("input").forEach((input) => (input.value = ""));
-      salvarDadosLocalmente();
-      atualizarResumo();
+function exportarParaExcel() {
+  const tabela = document.getElementById("tabela");
+  const workbook = XLSX.utils.table_to_book(tabela, { sheet: "Viagens" });
+  XLSX.writeFile(workbook, "controle_viagens.xlsx");
+}
+
+function salvarDadosLocalmente() {
+  const linhas = Array.from(document.querySelectorAll("#tabela tbody tr")).map(tr =>
+    Array.from(tr.children).map(td => td.textContent)
+  );
+  localStorage.setItem("viagens", JSON.stringify(linhas));
+}
+
+function carregarDadosSalvos() {
+  const dados = JSON.parse(localStorage.getItem("viagens"));
+  if (!dados) return;
+  dados.forEach(celulas => {
+    const row = `<tr>${celulas.map(conteudo => `<td>${conteudo}</td>`).join("")}</tr>`;
+    document.querySelector("#tabela tbody").insertAdjacentHTML("beforeend", row);
+  });
+  atualizarResumo();
+}
+
+function limparTabela() {
+  if (!confirm("Tem certeza que deseja apagar todos os dados?")) return;
+  document.querySelector("#tabela tbody").innerHTML = "";
+  localStorage.removeItem("viagens");
+  localStorage.removeItem("formTemp");
+  atualizarResumo();
+}
+
+function atualizarResumo() {
+  const linhas = document.querySelectorAll("#tabela tbody tr");
+  let totalViagens = 0, totalKm = 0, totalFrete = 0, totalGastos = 0, totalSaldo = 0;
+  const labels = [], fretes = [], gastos = [], saldos = [];
+
+  linhas.forEach(linha => {
+    const celulas = linha.querySelectorAll("td");
+    totalViagens++;
+    const km = parseFloat(celulas[4].textContent);
+    const gasto = parseFloat(celulas[9].textContent.replace("R$ ", "").replace(",", "."));
+    const frete = parseFloat(celulas[11].textContent.replace("R$ ", "").replace(",", "."));
+    const saldo = parseFloat(celulas[12].textContent.replace("R$ ", "").replace(",", "."));
+    const destino = celulas[3].textContent;
+
+    totalKm += km;
+    totalGastos += gasto;
+    totalFrete += frete;
+    totalSaldo += saldo;
+
+    labels.push(destino);
+    fretes.push(frete);
+    gastos.push(gasto);
+    saldos.push(saldo);
+  });
+
+  document.getElementById("resumo-viagens").textContent = totalViagens;
+  document.getElementById("resumo-km").textContent = totalKm;
+  document.getElementById("resumo-media-km").textContent = (totalKm > 0 ? (totalGastos / totalKm).toFixed(2) : "0.00");
+  document.getElementById("resumo-frete").textContent = totalFrete.toFixed(2);
+  document.getElementById("resumo-gastos").textContent = totalGastos.toFixed(2);
+  document.getElementById("resumo-saldo").textContent = totalSaldo.toFixed(2);
+
+  renderizarGrafico(labels, fretes, gastos, saldos);
+}
+
+function filtrarTabela() {
+  const filtro = document.getElementById("busca").value.toLowerCase();
+  const linhas = document.querySelectorAll("#tabela tbody tr");
+
+  linhas.forEach(linha => {
+    const texto = linha.textContent.toLowerCase();
+    linha.style.display = texto.includes(filtro) ? "" : "none";
+  });
+}
+
+function renderizarGrafico(labels, fretes, gastos, saldos) {
+  const ctx = document.getElementById("graficoResumo").getContext("2d");
+  if (chart) chart.destroy();
+  chart = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: labels,
+      datasets: [
+        { label: "Frete", backgroundColor: "#4caf50", data: fretes, borderRadius: 5 },
+        { label: "Gastos", backgroundColor: "#f44336", data: gastos, borderRadius: 5 },
+        { label: "Saldo", backgroundColor: "#2196f3", data: saldos, type: "line", borderColor: "#2196f3", backgroundColor: "transparent", tension: 0.4, fill: false }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: "top" },
+        title: { display: true, text: "Resumo por Viagem" }
+      },
+      scales: { y: { beginAtZero: true } }
     }
+  });
+}
 
-    function exportarParaExcel() {
-      const tabela = document.getElementById("tabela");
-      const workbook = XLSX.utils.table_to_book(tabela, { sheet: "Viagens" });
-      XLSX.writeFile(workbook, "controle_viagens.xlsx");
-    }
-
-    function salvarDadosLocalmente() {
-      const linhas = Array.from(document.querySelectorAll("#tabela tbody tr")).map(tr => {
-        return Array.from(tr.children).map(td => td.textContent);
-      });
-      localStorage.setItem("viagens", JSON.stringify(linhas));
-    }
-
-    function carregarDadosSalvos() {
-      const dados = JSON.parse(localStorage.getItem("viagens"));
-      if (!dados) return;
-      dados.forEach(celulas => {
-        const row = `
-          <tr>
-            ${celulas.map(conteudo => `<td>${conteudo}</td>`).join("")}
-          </tr>
-        `;
-        document.querySelector("#tabela tbody").insertAdjacentHTML("beforeend", row);
-      });
-      atualizarResumo();
-    }
-
-    function limparTabela() {
-      if (!confirm("Tem certeza que deseja apagar todos os dados?")) return;
-      document.querySelector("#tabela tbody").innerHTML = "";
-      localStorage.removeItem("viagens");
-      atualizarResumo();
-    }
-
-    function atualizarResumo() {
-      const linhas = document.querySelectorAll("#tabela tbody tr");
-      let totalViagens = 0, totalKm = 0, totalFrete = 0, totalGastos = 0, totalSaldo = 0;
-
-      const labels = [], fretes = [], gastos = [], saldos = [];
-
-      linhas.forEach(linha => {
-        const celulas = linha.querySelectorAll("td");
-        totalViagens++;
-        const km = parseFloat(celulas[4].textContent.replace(" km", ""));
-        const gasto = parseFloat(celulas[9].textContent.replace("R$ ", "").replace(",", "."));
-        const frete = parseFloat(celulas[11].textContent.replace("R$ ", "").replace(",", "."));
-        const saldo = parseFloat(celulas[12].textContent.replace("R$ ", "").replace(",", "."));
-        const destino = celulas[3].textContent;
-
-        totalKm += km;
-        totalGastos += gasto;
-        totalFrete += frete;
-        totalSaldo += saldo;
-
-        labels.push(destino);
-        fretes.push(frete);
-        gastos.push(gasto);
-        saldos.push(saldo);
-      });
-
-      document.getElementById("resumo-viagens").textContent = totalViagens;
-      document.getElementById("resumo-km").textContent = totalKm;
-      document.getElementById("resumo-media-km").textContent = (totalKm > 0 ? (totalGastos / totalKm).toFixed(2) : "0.00");
-      document.getElementById("resumo-frete").textContent = totalFrete.toFixed(2);
-      document.getElementById("resumo-gastos").textContent = totalGastos.toFixed(2);
-      document.getElementById("resumo-saldo").textContent = totalSaldo.toFixed(2);
-
-      renderizarGrafico(labels, fretes, gastos, saldos);
-    }
-
-    function renderizarGrafico(labels, fretes, gastos, saldos) {
-      const ctx = document.getElementById("graficoResumo").getContext("2d");
-      if (chart) chart.destroy();
-      chart = new Chart(ctx, {
-        type: "bar",
-        data: {
-          labels: labels,
-          datasets: [
-            { label: "Frete", backgroundColor: "#4caf50", data: fretes },
-            { label: "Gastos", backgroundColor: "#f44336", data: gastos },
-            { label: "Saldo", backgroundColor: "#2196f3", data: saldos }
-          ]
-        },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: { position: "top" },
-            title: { display: true, text: "Resumo por Viagem" }
-          }
-        }
-      });
-    }
-
-    // Inicializar app
-    carregarDadosSalvos();
-  </script>
+carregarDadosSalvos();
+</script>
 </body>
 </html>
