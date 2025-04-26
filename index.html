@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <title>Controle de Viagens</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
   <style>
     body { font-family: Arial, sans-serif; margin: 20px; background: #eef2f3; }
 
@@ -59,14 +58,6 @@
       text-align: left;
       white-space: nowrap;
     }
-
-    #filtroMes {
-      width: 100%;
-      margin: 20px 0;
-      padding: 10px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-    }
   </style>
 </head>
 
@@ -91,9 +82,9 @@
     <button onclick="limparTabela()">Limpar Tabela</button>
   </div>
 
-  <select id="filtroMes" onchange="filtrarPorMes()">
-    <option value="">-- Filtrar por Mês --</option>
-  </select>
+  <div class="formulario" style="margin-top: 20px;">
+    <input id="filtroMes" type="month" onchange="filtrarPorMes()" />
+  </div>
 
   <div id="resumo">
     <h2>Resumo</h2>
@@ -121,15 +112,14 @@
         <th>Custo/KM</th>
         <th>Frete</th>
         <th>Saldo Final</th>
-        <th>Ações</th>
+        <th>Ação</th>
       </tr>
     </thead>
     <tbody></tbody>
   </table>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-
-  <script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
 function adicionarViagem() {
   const cliente = document.getElementById("cliente").value;
   const contato = document.getElementById("contato").value;
@@ -158,31 +148,31 @@ function adicionarViagem() {
   const custoPorKm = kmRodado > 0 ? (totalGastos / kmRodado).toFixed(2) : "0.00";
   const saldoFinal = (frete - totalGastos).toFixed(2);
   const dataFormatada = new Date(data).toLocaleDateString("pt-BR");
-  const dataMes = data.slice(0,7); // yyyy-mm
+  const mes = data.slice(0, 7); // formato yyyy-mm
 
-  const row = `<tr data-mes="${dataMes}">
+  const row = document.createElement("tr");
+  row.setAttribute("data-mes", mes);
+  row.innerHTML = `
     <td>${cliente}</td><td>${contato}</td><td>${dataFormatada}</td>
-    <td>${origem} → ${destino}</td><td>${kmRodado}</td>
+    <td>${origem} → ${destino}</td><td>${kmRodado} km</td>
     <td>R$ ${combustivel.toFixed(2)}</td><td>R$ ${pedagios.toFixed(2)}</td>
     <td>R$ ${outros.toFixed(2)}</td><td>R$ ${ajudante.toFixed(2)}</td>
     <td>R$ ${totalGastos.toFixed(2)}</td><td>R$ ${custoPorKm}</td>
     <td>R$ ${frete.toFixed(2)}</td><td>R$ ${saldoFinal}</td>
     <td><button onclick="excluirViagem(this)">Excluir</button></td>
-  </tr>`;
+  `;
+  document.querySelector("#tabela tbody").appendChild(row);
 
-  document.querySelector("#tabela tbody").insertAdjacentHTML("beforeend", row);
-  document.querySelectorAll("input").forEach((input) => (input.value = ""));
+  document.querySelectorAll(".formulario input").forEach(input => input.value = "");
   salvarDadosLocalmente();
   atualizarResumo();
-  atualizarFiltroMes();
 }
 
 function excluirViagem(botao) {
-  if (confirm("Deseja excluir esta viagem?")) {
-    botao.closest("tr").remove();
+  if (confirm("Deseja realmente excluir esta viagem?")) {
+    botao.parentElement.parentElement.remove();
     salvarDadosLocalmente();
     atualizarResumo();
-    atualizarFiltroMes();
   }
 }
 
@@ -194,8 +184,8 @@ function exportarParaExcel() {
 
 function salvarDadosLocalmente() {
   const linhas = Array.from(document.querySelectorAll("#tabela tbody tr")).map(tr => ({
-    mes: tr.dataset.mes,
-    celulas: Array.from(tr.querySelectorAll("td")).slice(0,13).map(td => td.textContent)
+    mes: tr.getAttribute("data-mes"),
+    celulas: Array.from(tr.querySelectorAll("td")).slice(0, 13).map(td => td.textContent)
   }));
   localStorage.setItem("viagens", JSON.stringify(linhas));
 }
@@ -204,14 +194,14 @@ function carregarDadosSalvos() {
   const dados = JSON.parse(localStorage.getItem("viagens"));
   if (!dados) return;
   dados.forEach(item => {
-    const row = `<tr data-mes="${item.mes}">
-      ${item.celulas.map(c => `<td>${c}</td>`).join("")}
-      <td><button onclick="excluirViagem(this)">Excluir</button></td>
-    </tr>`;
-    document.querySelector("#tabela tbody").insertAdjacentHTML("beforeend", row);
+    const row = document.createElement("tr");
+    row.setAttribute("data-mes", item.mes);
+    row.innerHTML = item.celulas.map(c => `<td>${c}</td>`).join("") +
+      `<td><button onclick="excluirViagem(this)">Excluir</button></td>`;
+    document.querySelector("#tabela tbody").appendChild(row);
   });
   atualizarResumo();
-  atualizarFiltroMes();
+  preencherFiltroComMesAtual();
 }
 
 function limparTabela() {
@@ -219,7 +209,6 @@ function limparTabela() {
   document.querySelector("#tabela tbody").innerHTML = "";
   localStorage.removeItem("viagens");
   atualizarResumo();
-  atualizarFiltroMes();
 }
 
 function atualizarResumo() {
@@ -227,13 +216,13 @@ function atualizarResumo() {
   let totalViagens = 0, totalKm = 0, totalFrete = 0, totalGastos = 0, totalSaldo = 0;
 
   linhas.forEach(linha => {
+    if (linha.style.display === "none") return; // só contar linhas visíveis
     const celulas = linha.querySelectorAll("td");
     totalViagens++;
     const km = parseFloat(celulas[4].textContent);
     const gasto = parseFloat(celulas[9].textContent.replace("R$ ", "").replace(",", "."));
     const frete = parseFloat(celulas[11].textContent.replace("R$ ", "").replace(",", "."));
     const saldo = parseFloat(celulas[12].textContent.replace("R$ ", "").replace(",", "."));
-
     totalKm += km;
     totalGastos += gasto;
     totalFrete += frete;
@@ -248,31 +237,24 @@ function atualizarResumo() {
   document.getElementById("resumo-saldo").textContent = totalSaldo.toFixed(2);
 }
 
-function atualizarFiltroMes() {
-  const select = document.getElementById("filtroMes");
-  const meses = new Set();
-  document.querySelectorAll("#tabela tbody tr").forEach(tr => {
-    meses.add(tr.dataset.mes);
-  });
-
-  select.innerHTML = `<option value="">-- Filtrar por Mês --</option>`;
-  Array.from(meses).sort().forEach(mes => {
-    select.innerHTML += `<option value="${mes}">${mes}</option>`;
-  });
+function preencherFiltroComMesAtual() {
+  const hoje = new Date();
+  const anoMesAtual = hoje.toISOString().slice(0, 7);
+  document.getElementById("filtroMes").value = anoMesAtual;
+  filtrarPorMes();
 }
 
 function filtrarPorMes() {
-  const mesSelecionado = document.getElementById("filtroMes").value;
-  document.querySelectorAll("#tabela tbody tr").forEach(tr => {
-    if (!mesSelecionado || tr.dataset.mes === mesSelecionado) {
-      tr.style.display = "";
-    } else {
-      tr.style.display = "none";
-    }
+  const filtro = document.getElementById("filtroMes").value;
+  const linhas = document.querySelectorAll("#tabela tbody tr");
+  linhas.forEach(linha => {
+    linha.style.display = (filtro === "" || linha.getAttribute("data-mes") === filtro) ? "" : "none";
   });
+  atualizarResumo();
 }
 
 carregarDadosSalvos();
-  </script>
+</script>
+
 </body>
 </html>
