@@ -1,138 +1,153 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>Controle de Viagens</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; background: #eef2f3; }
-
-    .formulario {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
+    body {
+      font-family: 'Arial', sans-serif;
+      background: #f0f2f5;
+      margin: 20px;
     }
 
-    .formulario input, .formulario button {
-      flex: 1 1 250px;
-      min-width: 200px;
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+
+    input, button {
+      margin: 5px;
       padding: 10px;
-      border: 1px solid #ccc;
       border-radius: 8px;
+      border: 1px solid #ccc;
+      width: 200px;
+      box-shadow: 1px 1px 5px rgba(0,0,0,0.1);
     }
 
     button {
-      background-color: #4caf50;
-      color: white;
-      border: none;
-      border-radius: 8px;
       cursor: pointer;
-      transition: 0.3s;
-    }
-    button:hover {
-      background-color: #45a049;
+      font-weight: bold;
     }
 
-    #resumo {
-      background: #f9f9f9;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
-      margin-top: 20px;
-    }
+    .btn-adicionar { background-color: #4CAF50; color: white; }
+    .btn-exportar { background-color: #2196F3; color: white; }
+    .btn-limpar { background-color: #f44336; color: white; }
+    .botao-excluir { background-color: #ff5722; color: white; }
 
     table {
-      width: 100%;
       border-collapse: collapse;
+      width: 100%;
       margin-top: 20px;
       background: white;
       border-radius: 10px;
-      overflow-x: auto;
-      display: block;
-      box-shadow: 0px 0px 10px rgba(0,0,0,0.05);
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
 
     th, td {
-      border: 1px solid #ccc;
-      padding: 8px;
-      text-align: left;
-      white-space: nowrap;
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: center;
     }
 
-    #busca {
-      width: 100%;
-      margin: 20px 0;
-      padding: 10px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
+    th {
+      background-color: #f8f8f8;
+    }
+
+    #resumo {
+      background: #ffffff;
+      padding: 20px;
+      margin-top: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    #resumo h2 {
+      margin-top: 0;
+      color: #555;
     }
 
     #grafico-container {
       margin-top: 30px;
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    #busca {
+      margin-top: 20px;
+      padding: 10px;
+      width: 300px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
     }
   </style>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
+
 <body>
-  <h1>Controle de Viagens</h1>
 
-  <div class="formulario">
-    <input id="cliente" placeholder="Nome do Cliente" />
-    <input id="contato" placeholder="Contato" />
-    <input id="data" type="date" />
-    <input id="origem" placeholder="Origem" />
-    <input id="destino" placeholder="Destino" />
-    <input id="kmInicial" type="number" placeholder="KM Inicial" />
-    <input id="kmFinal" type="number" placeholder="KM Final" />
-    <input id="combustivel" type="number" placeholder="Combustível (R$)" />
-    <input id="pedagios" type="number" placeholder="Pedágios (R$)" />
-    <input id="outros" type="number" placeholder="Outros (R$)" />
-    <input id="ajudante" type="number" placeholder="Ajudante (R$)" />
-    <input id="frete" type="number" placeholder="Valor do Frete (R$)" />
-    <button onclick="adicionarViagem()">Adicionar Viagem</button>
-    <button onclick="exportarParaExcel()">Exportar para Excel</button>
-    <button onclick="limparTabela()">Limpar Tabela</button>
-  </div>
+<h1>Controle de Viagens</h1>
 
-  <input type="text" id="busca" placeholder="Buscar por Cliente, Origem ou Destino" onkeyup="filtrarTabela()" />
+<div style="text-align: center;">
+  <input id="cliente" placeholder="Nome do Cliente" />
+  <input id="contato" placeholder="Contato" />
+  <input id="data" type="date" />
+  <input id="origem" placeholder="Origem" />
+  <input id="destino" placeholder="Destino" />
+  <input id="kmInicial" type="number" placeholder="KM Inicial" />
+  <input id="kmFinal" type="number" placeholder="KM Final" />
+  <input id="combustivel" type="number" placeholder="Combustível (R$)" />
+  <input id="pedagios" type="number" placeholder="Pedágios (R$)" />
+  <input id="outros" type="number" placeholder="Outros (R$)" />
+  <input id="ajudante" type="number" placeholder="Ajudante (R$)" />
+  <input id="frete" type="number" placeholder="Valor do Frete (R$)" />
+  <br/>
+  <button class="btn-adicionar" onclick="adicionarViagem()">Adicionar Viagem</button>
+  <button class="btn-exportar" onclick="exportarParaExcel()">Exportar para Excel</button>
+  <button class="btn-limpar" onclick="limparTabela()">Limpar Tabela</button>
+</div>
 
-  <div id="resumo">
-    <h2>Resumo</h2>
-    <p>Total de Viagens: <span id="resumo-viagens">0</span></p>
-    <p>Total de KM Rodado: <span id="resumo-km">0</span> km</p>
-    <p>Média de Custo por KM: R$ <span id="resumo-media-km">0.00</span></p>
-    <p>Total de Frete: R$ <span id="resumo-frete">0.00</span></p>
-    <p>Total de Gastos: R$ <span id="resumo-gastos">0.00</span></p>
-    <p>Total de Saldo Final: R$ <span id="resumo-saldo">0.00</span></p>
-  </div>
+<input id="busca" placeholder="🔎 Buscar..." onkeyup="filtrarTabela()"/>
 
-  <table id="tabela">
-    <thead>
-      <tr>
-        <th>Cliente</th>
-        <th>Contato</th>
-        <th>Data</th>
-        <th>Origem → Destino</th>
-        <th>KM Rodado</th>
-        <th>Combustível</th>
-        <th>Pedágios</th>
-        <th>Outros</th>
-        <th>Ajudante</th>
-        <th>Gastos Totais</th>
-        <th>Custo/KM</th>
-        <th>Frete</th>
-        <th>Saldo Final</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+<div id="resumo">
+  <h2>Resumo</h2>
+  <p>Total de Viagens: <span id="resumo-viagens">0</span></p>
+  <p>Total de KM Rodado: <span id="resumo-km">0</span> km</p>
+  <p>Média de Custo por KM: R$ <span id="resumo-media-km">0.00</span></p>
+  <p>Total de Frete: R$ <span id="resumo-frete">0.00</span></p>
+  <p>Total de Gastos: R$ <span id="resumo-gastos">0.00</span></p>
+  <p>Total de Saldo Final: R$ <span id="resumo-saldo">0.00</span></p>
+</div>
 
-  <div id="grafico-container">
-    <canvas id="graficoResumo" height="120"></canvas>
-  </div>
+<table id="tabela">
+  <thead>
+    <tr>
+      <th>Cliente</th>
+      <th>Contato</th>
+      <th>Data</th>
+      <th>Origem → Destino</th>
+      <th>KM Rodado</th>
+      <th>Combustível</th>
+      <th>Pedágios</th>
+      <th>Outros</th>
+      <th>Ajudante</th>
+      <th>Gastos Totais</th>
+      <th>Custo/KM</th>
+      <th>Frete</th>
+      <th>Saldo Final</th>
+      <th>Ações</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+<div id="grafico-container">
+  <canvas id="graficoResumo" height="120"></canvas>
+</div>
 
 <script>
 let chart;
@@ -151,10 +166,12 @@ function adicionarViagem() {
   const ajudante = parseFloat(document.getElementById("ajudante").value);
   const frete = parseFloat(document.getElementById("frete").value);
 
-  if (isNaN(kmInicial) || isNaN(kmFinal) || isNaN(combustivel) || isNaN(pedagios) || isNaN(outros) || isNaN(ajudante) || isNaN(frete)) {
+  if (isNaN(kmInicial) || isNaN(kmFinal) || isNaN(combustivel) ||
+      isNaN(pedagios) || isNaN(outros) || isNaN(ajudante) || isNaN(frete)) {
     alert("Por favor, preencha todos os campos corretamente.");
     return;
   }
+
   if (kmFinal < kmInicial) {
     alert("KM Final não pode ser menor que o KM Inicial.");
     return;
@@ -166,20 +183,39 @@ function adicionarViagem() {
   const saldoFinal = (frete - totalGastos).toFixed(2);
   const dataFormatada = new Date(data).toLocaleDateString("pt-BR");
 
-  const row = `<tr>
-    <td>${cliente}</td><td>${contato}</td><td>${dataFormatada}</td>
-    <td>${origem} → ${destino}</td><td>${kmRodado} km</td>
-    <td>R$ ${combustivel.toFixed(2)}</td><td>R$ ${pedagios.toFixed(2)}</td>
-    <td>R$ ${outros.toFixed(2)}</td><td>R$ ${ajudante.toFixed(2)}</td>
-    <td>R$ ${totalGastos.toFixed(2)}</td><td>R$ ${custoPorKm}</td>
-    <td>R$ ${frete.toFixed(2)}</td><td>R$ ${saldoFinal}</td>
-  </tr>`;
+  const tbody = document.querySelector("#tabela tbody");
+  const tr = document.createElement("tr");
 
-  document.querySelector("#tabela tbody").insertAdjacentHTML("beforeend", row);
-  document.querySelectorAll("input").forEach((input) => (input.value = ""));
+  tr.innerHTML = `
+    <td>${cliente}</td>
+    <td>${contato}</td>
+    <td>${dataFormatada}</td>
+    <td>${origem} → ${destino}</td>
+    <td>${kmRodado} km</td>
+    <td>R$ ${combustivel.toFixed(2)}</td>
+    <td>R$ ${pedagios.toFixed(2)}</td>
+    <td>R$ ${outros.toFixed(2)}</td>
+    <td>R$ ${ajudante.toFixed(2)}</td>
+    <td>R$ ${totalGastos.toFixed(2)}</td>
+    <td>R$ ${custoPorKm}</td>
+    <td>R$ ${frete.toFixed(2)}</td>
+    <td>R$ ${saldoFinal}</td>
+    <td><button class="botao-excluir" onclick="excluirLinha(this)">Excluir</button></td>
+  `;
+
+  tbody.appendChild(tr);
+  document.querySelectorAll("input").forEach(input => input.value = "");
   localStorage.removeItem("formTemp");
   salvarDadosLocalmente();
   atualizarResumo();
+}
+
+function excluirLinha(botao) {
+  if (confirm("Tem certeza que deseja excluir esta viagem?")) {
+    botao.parentElement.parentElement.remove();
+    salvarDadosLocalmente();
+    atualizarResumo();
+  }
 }
 
 function exportarParaExcel() {
@@ -189,9 +225,9 @@ function exportarParaExcel() {
 }
 
 function salvarDadosLocalmente() {
-  const linhas = Array.from(document.querySelectorAll("#tabela tbody tr")).map(tr =>
-    Array.from(tr.children).map(td => td.textContent)
-  );
+  const linhas = Array.from(document.querySelectorAll("#tabela tbody tr")).map(tr => {
+    return Array.from(tr.querySelectorAll("td:not(:last-child)")).map(td => td.textContent);
+  });
   localStorage.setItem("viagens", JSON.stringify(linhas));
 }
 
@@ -199,8 +235,12 @@ function carregarDadosSalvos() {
   const dados = JSON.parse(localStorage.getItem("viagens"));
   if (!dados) return;
   dados.forEach(celulas => {
-    const row = `<tr>${celulas.map(conteudo => `<td>${conteudo}</td>`).join("")}</tr>`;
-    document.querySelector("#tabela tbody").insertAdjacentHTML("beforeend", row);
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      ${celulas.map(c => `<td>${c}</td>`).join("")}
+      <td><button class="botao-excluir" onclick="excluirLinha(this)">Excluir</button></td>
+    `;
+    document.querySelector("#tabela tbody").appendChild(tr);
   });
   atualizarResumo();
 }
@@ -221,12 +261,11 @@ function atualizarResumo() {
   linhas.forEach(linha => {
     const celulas = linha.querySelectorAll("td");
     totalViagens++;
-    const km = parseFloat(celulas[4].textContent);
+    const km = parseFloat(celulas[4].textContent.replace(" km", ""));
     const gasto = parseFloat(celulas[9].textContent.replace("R$ ", "").replace(",", "."));
     const frete = parseFloat(celulas[11].textContent.replace("R$ ", "").replace(",", "."));
     const saldo = parseFloat(celulas[12].textContent.replace("R$ ", "").replace(",", "."));
     const destino = celulas[3].textContent;
-
     totalKm += km;
     totalGastos += gasto;
     totalFrete += frete;
@@ -248,16 +287,6 @@ function atualizarResumo() {
   renderizarGrafico(labels, fretes, gastos, saldos);
 }
 
-function filtrarTabela() {
-  const filtro = document.getElementById("busca").value.toLowerCase();
-  const linhas = document.querySelectorAll("#tabela tbody tr");
-
-  linhas.forEach(linha => {
-    const texto = linha.textContent.toLowerCase();
-    linha.style.display = texto.includes(filtro) ? "" : "none";
-  });
-}
-
 function renderizarGrafico(labels, fretes, gastos, saldos) {
   const ctx = document.getElementById("graficoResumo").getContext("2d");
   if (chart) chart.destroy();
@@ -266,9 +295,9 @@ function renderizarGrafico(labels, fretes, gastos, saldos) {
     data: {
       labels: labels,
       datasets: [
-        { label: "Frete", backgroundColor: "#4caf50", data: fretes, borderRadius: 5 },
-        { label: "Gastos", backgroundColor: "#f44336", data: gastos, borderRadius: 5 },
-        { label: "Saldo", backgroundColor: "#2196f3", data: saldos, type: "line", borderColor: "#2196f3", backgroundColor: "transparent", tension: 0.4, fill: false }
+        { label: "Frete", backgroundColor: "#4caf50", data: fretes },
+        { label: "Gastos", backgroundColor: "#f44336", data: gastos },
+        { label: "Saldo", backgroundColor: "#2196f3", data: saldos }
       ]
     },
     options: {
@@ -276,13 +305,21 @@ function renderizarGrafico(labels, fretes, gastos, saldos) {
       plugins: {
         legend: { position: "top" },
         title: { display: true, text: "Resumo por Viagem" }
-      },
-      scales: { y: { beginAtZero: true } }
+      }
     }
+  });
+}
+
+function filtrarTabela() {
+  const termo = document.getElementById("busca").value.toLowerCase();
+  const linhas = document.querySelectorAll("#tabela tbody tr");
+  linhas.forEach(linha => {
+    linha.style.display = linha.textContent.toLowerCase().includes(termo) ? "" : "none";
   });
 }
 
 carregarDadosSalvos();
 </script>
+
 </body>
 </html>
