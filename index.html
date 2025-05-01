@@ -6,13 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body { font-family: Arial, sans-serif; margin: 20px; background: #eef2f3; }
-
-    .formulario {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-
+    .formulario { display: flex; flex-wrap: wrap; gap: 10px; }
     .formulario input, .formulario button, .formulario select {
       flex: 1 1 250px;
       min-width: 200px;
@@ -20,7 +14,6 @@
       border: 1px solid #ccc;
       border-radius: 8px;
     }
-
     button {
       background-color: #4caf50;
       color: white;
@@ -29,10 +22,7 @@
       cursor: pointer;
       transition: 0.3s;
     }
-    button:hover {
-      background-color: #45a049;
-    }
-
+    button:hover { background-color: #45a049; }
     #resumo {
       background: #f9f9f9;
       padding: 20px;
@@ -40,7 +30,6 @@
       box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
       margin-top: 20px;
     }
-
     table {
       width: 100%;
       border-collapse: collapse;
@@ -51,7 +40,6 @@
       display: block;
       box-shadow: 0px 0px 10px rgba(0,0,0,0.05);
     }
-
     th, td {
       border: 1px solid #ccc;
       padding: 8px;
@@ -60,10 +48,8 @@
     }
   </style>
 </head>
-
 <body>
   <h1>Controle de Viagens</h1>
-
   <div class="formulario">
     <input id="cliente" placeholder="Nome do Cliente" />
     <input id="contato" placeholder="Contato" />
@@ -77,15 +63,13 @@
     <input id="outros" type="number" placeholder="Outros (R$)" />
     <input id="ajudante" type="number" placeholder="Ajudante (R$)" />
     <input id="frete" type="number" placeholder="Valor do Frete (R$)" />
-    <button onclick="adicionarViagem()">Adicionar Viagem</button>
+    <button id="botao-adicionar" onclick="adicionarOuSalvarViagem()">Adicionar Viagem</button>
     <button onclick="exportarParaExcel()">Exportar para Excel</button>
     <button onclick="limparTabela()">Limpar Tabela</button>
   </div>
-
   <div class="formulario" style="margin-top: 20px;">
     <input id="filtroMes" type="month" onchange="filtrarPorMes()" />
   </div>
-
   <div id="resumo">
     <h2>Resumo</h2>
     <p>Total de Viagens: <span id="resumo-viagens">0</span></p>
@@ -95,32 +79,19 @@
     <p>Total de Gastos: R$ <span id="resumo-gastos">0.00</span></p>
     <p>Total de Saldo Final: R$ <span id="resumo-saldo">0.00</span></p>
   </div>
-
   <table id="tabela">
     <thead>
       <tr>
-        <th>Cliente</th>
-        <th>Contato</th>
-        <th>Data</th>
-        <th>Origem → Destino</th>
-        <th>KM Rodado</th>
-        <th>Combustível</th>
-        <th>Pedágios</th>
-        <th>Outros</th>
-        <th>Ajudante</th>
-        <th>Gastos Totais</th>
-        <th>Custo/KM</th>
-        <th>Frete</th>
-        <th>Saldo Final</th>
-        <th>Ação</th>
+        <th>Cliente</th><th>Contato</th><th>Data</th><th>Origem → Destino</th><th>KM Rodado</th><th>Combustível</th><th>Pedágios</th><th>Outros</th><th>Ajudante</th><th>Gastos Totais</th><th>Custo/KM</th><th>Frete</th><th>Saldo Final</th><th>Ação</th>
       </tr>
     </thead>
     <tbody></tbody>
   </table>
-
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
-function adicionarViagem() {
+let linhaEditando = null;
+
+function adicionarOuSalvarViagem() {
   const cliente = document.getElementById("cliente").value;
   const contato = document.getElementById("contato").value;
   const data = document.getElementById("data").value;
@@ -135,12 +106,10 @@ function adicionarViagem() {
   const frete = parseFloat(document.getElementById("frete").value);
 
   if (isNaN(kmInicial) || isNaN(kmFinal) || isNaN(combustivel) || isNaN(pedagios) || isNaN(outros) || isNaN(ajudante) || isNaN(frete)) {
-    alert("Por favor, preencha todos os campos corretamente.");
-    return;
+    alert("Por favor, preencha todos os campos corretamente."); return;
   }
   if (kmFinal < kmInicial) {
-    alert("KM Final não pode ser menor que o KM Inicial.");
-    return;
+    alert("KM Final não pode ser menor que o KM Inicial."); return;
   }
 
   const kmRodado = kmFinal - kmInicial;
@@ -148,24 +117,60 @@ function adicionarViagem() {
   const custoPorKm = kmRodado > 0 ? (totalGastos / kmRodado).toFixed(2) : "0.00";
   const saldoFinal = (frete - totalGastos).toFixed(2);
   const dataFormatada = new Date(data).toLocaleDateString("pt-BR");
-  const mes = data.slice(0, 7); // formato yyyy-mm
+  const mes = data.slice(0, 7);
 
-  const row = document.createElement("tr");
-  row.setAttribute("data-mes", mes);
-  row.innerHTML = `
-    <td>${cliente}</td><td>${contato}</td><td>${dataFormatada}</td>
-    <td>${origem} → ${destino}</td><td>${kmRodado} km</td>
-    <td>R$ ${combustivel.toFixed(2)}</td><td>R$ ${pedagios.toFixed(2)}</td>
-    <td>R$ ${outros.toFixed(2)}</td><td>R$ ${ajudante.toFixed(2)}</td>
-    <td>R$ ${totalGastos.toFixed(2)}</td><td>R$ ${custoPorKm}</td>
-    <td>R$ ${frete.toFixed(2)}</td><td>R$ ${saldoFinal}</td>
-    <td><button onclick="excluirViagem(this)">Excluir</button></td>
-  `;
-  document.querySelector("#tabela tbody").appendChild(row);
+  const html = `
+    <td>${cliente}</td><td>${contato}</td><td>${dataFormatada}</td><td>${origem} → ${destino}</td>
+    <td>${kmRodado} km</td><td>R$ ${combustivel.toFixed(2)}</td><td>R$ ${pedagios.toFixed(2)}</td>
+    <td>R$ ${outros.toFixed(2)}</td><td>R$ ${ajudante.toFixed(2)}</td><td>R$ ${totalGastos.toFixed(2)}</td>
+    <td>R$ ${custoPorKm}</td><td>R$ ${frete.toFixed(2)}</td><td>R$ ${saldoFinal}</td>
+    <td>
+      <button onclick="editarViagem(this)">Editar</button>
+      <button onclick="excluirViagem(this)">Excluir</button>
+    </td>`;
+
+  if (linhaEditando) {
+    linhaEditando.innerHTML = html;
+    linhaEditando.setAttribute("data-mes", mes);
+    linhaEditando = null;
+    document.getElementById("botao-adicionar").textContent = "Adicionar Viagem";
+  } else {
+    const row = document.createElement("tr");
+    row.setAttribute("data-mes", mes);
+    row.innerHTML = html;
+    document.querySelector("#tabela tbody").appendChild(row);
+  }
 
   document.querySelectorAll(".formulario input").forEach(input => input.value = "");
   salvarDadosLocalmente();
   atualizarResumo();
+}
+
+function editarViagem(botao) {
+  const tr = botao.parentElement.parentElement;
+  const c = tr.querySelectorAll("td");
+  document.getElementById("cliente").value = c[0].textContent;
+  document.getElementById("contato").value = c[1].textContent;
+  const data = c[2].textContent.split("/");
+  document.getElementById("data").value = `${data[2]}-${data[1]}-${data[0]}`;
+  const origemDestino = c[3].textContent.split(" → ");
+  document.getElementById("origem").value = origemDestino[0];
+  document.getElementById("destino").value = origemDestino[1];
+  const kmRodado = parseFloat(c[4].textContent);
+  const totalGastos = parseFloat(c[9].textContent.replace("R$ ", ""));
+
+  const custoKm = parseFloat(c[10].textContent.replace("R$ ", ""));
+  const kmInicial = 0; // opcional: armazenar valor original para usar aqui
+  document.getElementById("kmInicial").value = "0";
+  document.getElementById("kmFinal").value = kmRodado;
+  document.getElementById("combustivel").value = parseFloat(c[5].textContent.replace("R$ ", ""));
+  document.getElementById("pedagios").value = parseFloat(c[6].textContent.replace("R$ ", ""));
+  document.getElementById("outros").value = parseFloat(c[7].textContent.replace("R$ ", ""));
+  document.getElementById("ajudante").value = parseFloat(c[8].textContent.replace("R$ ", ""));
+  document.getElementById("frete").value = parseFloat(c[11].textContent.replace("R$ ", ""));
+
+  linhaEditando = tr;
+  document.getElementById("botao-adicionar").textContent = "Salvar Alterações";
 }
 
 function excluirViagem(botao) {
@@ -175,13 +180,11 @@ function excluirViagem(botao) {
     atualizarResumo();
   }
 }
-
 function exportarParaExcel() {
   const tabela = document.getElementById("tabela");
   const workbook = XLSX.utils.table_to_book(tabela, { sheet: "Viagens" });
   XLSX.writeFile(workbook, "controle_viagens.xlsx");
 }
-
 function salvarDadosLocalmente() {
   const linhas = Array.from(document.querySelectorAll("#tabela tbody tr")).map(tr => ({
     mes: tr.getAttribute("data-mes"),
@@ -189,7 +192,6 @@ function salvarDadosLocalmente() {
   }));
   localStorage.setItem("viagens", JSON.stringify(linhas));
 }
-
 function carregarDadosSalvos() {
   const dados = JSON.parse(localStorage.getItem("viagens"));
   if (!dados) return;
@@ -197,38 +199,31 @@ function carregarDadosSalvos() {
     const row = document.createElement("tr");
     row.setAttribute("data-mes", item.mes);
     row.innerHTML = item.celulas.map(c => `<td>${c}</td>`).join("") +
-      `<td><button onclick="excluirViagem(this)">Excluir</button></td>`;
+      `<td><button onclick="editarViagem(this)">Editar</button> <button onclick="excluirViagem(this)">Excluir</button></td>`;
     document.querySelector("#tabela tbody").appendChild(row);
   });
   atualizarResumo();
   preencherFiltroComMesAtual();
 }
-
 function limparTabela() {
   if (!confirm("Tem certeza que deseja apagar todos os dados?")) return;
   document.querySelector("#tabela tbody").innerHTML = "";
   localStorage.removeItem("viagens");
   atualizarResumo();
 }
-
 function atualizarResumo() {
   const linhas = document.querySelectorAll("#tabela tbody tr");
   let totalViagens = 0, totalKm = 0, totalFrete = 0, totalGastos = 0, totalSaldo = 0;
-
   linhas.forEach(linha => {
-    if (linha.style.display === "none") return; // só contar linhas visíveis
+    if (linha.style.display === "none") return;
     const celulas = linha.querySelectorAll("td");
     totalViagens++;
     const km = parseFloat(celulas[4].textContent);
-    const gasto = parseFloat(celulas[9].textContent.replace("R$ ", "").replace(",", "."));
-    const frete = parseFloat(celulas[11].textContent.replace("R$ ", "").replace(",", "."));
-    const saldo = parseFloat(celulas[12].textContent.replace("R$ ", "").replace(",", "."));
-    totalKm += km;
-    totalGastos += gasto;
-    totalFrete += frete;
-    totalSaldo += saldo;
+    const gasto = parseFloat(celulas[9].textContent.replace("R$ ", ""));
+    const frete = parseFloat(celulas[11].textContent.replace("R$ ", ""));
+    const saldo = parseFloat(celulas[12].textContent.replace("R$ ", ""));
+    totalKm += km; totalGastos += gasto; totalFrete += frete; totalSaldo += saldo;
   });
-
   document.getElementById("resumo-viagens").textContent = totalViagens;
   document.getElementById("resumo-km").textContent = totalKm;
   document.getElementById("resumo-media-km").textContent = (totalKm > 0 ? (totalGastos / totalKm).toFixed(2) : "0.00");
@@ -236,14 +231,12 @@ function atualizarResumo() {
   document.getElementById("resumo-gastos").textContent = totalGastos.toFixed(2);
   document.getElementById("resumo-saldo").textContent = totalSaldo.toFixed(2);
 }
-
 function preencherFiltroComMesAtual() {
   const hoje = new Date();
   const anoMesAtual = hoje.toISOString().slice(0, 7);
   document.getElementById("filtroMes").value = anoMesAtual;
   filtrarPorMes();
 }
-
 function filtrarPorMes() {
   const filtro = document.getElementById("filtroMes").value;
   const linhas = document.querySelectorAll("#tabela tbody tr");
@@ -252,9 +245,7 @@ function filtrarPorMes() {
   });
   atualizarResumo();
 }
-
 carregarDadosSalvos();
 </script>
-
 </body>
 </html>
