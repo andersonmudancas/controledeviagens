@@ -132,11 +132,15 @@ function adicionarOuSalvarViagem() {
   if (linhaEditando) {
     linhaEditando.innerHTML = html;
     linhaEditando.setAttribute("data-mes", mes);
+    linhaEditando.setAttribute("data-km-inicial", kmInicial);
+    linhaEditando.setAttribute("data-km-final", kmFinal);
     linhaEditando = null;
     document.getElementById("botao-adicionar").textContent = "Adicionar Viagem";
   } else {
     const row = document.createElement("tr");
     row.setAttribute("data-mes", mes);
+    row.setAttribute("data-km-inicial", kmInicial);
+    row.setAttribute("data-km-final", kmFinal);
     row.innerHTML = html;
     document.querySelector("#tabela tbody").appendChild(row);
   }
@@ -156,13 +160,8 @@ function editarViagem(botao) {
   const origemDestino = c[3].textContent.split(" → ");
   document.getElementById("origem").value = origemDestino[0];
   document.getElementById("destino").value = origemDestino[1];
-  const kmRodado = parseFloat(c[4].textContent);
-  const totalGastos = parseFloat(c[9].textContent.replace("R$ ", ""));
-
-  const custoKm = parseFloat(c[10].textContent.replace("R$ ", ""));
-  const kmInicial = 0; // opcional: armazenar valor original para usar aqui
-  document.getElementById("kmInicial").value = "0";
-  document.getElementById("kmFinal").value = kmRodado;
+  document.getElementById("kmInicial").value = tr.getAttribute("data-km-inicial") || "0";
+  document.getElementById("kmFinal").value = tr.getAttribute("data-km-final") || "0";
   document.getElementById("combustivel").value = parseFloat(c[5].textContent.replace("R$ ", ""));
   document.getElementById("pedagios").value = parseFloat(c[6].textContent.replace("R$ ", ""));
   document.getElementById("outros").value = parseFloat(c[7].textContent.replace("R$ ", ""));
@@ -180,24 +179,31 @@ function excluirViagem(botao) {
     atualizarResumo();
   }
 }
+
 function exportarParaExcel() {
   const tabela = document.getElementById("tabela");
   const workbook = XLSX.utils.table_to_book(tabela, { sheet: "Viagens" });
   XLSX.writeFile(workbook, "controle_viagens.xlsx");
 }
+
 function salvarDadosLocalmente() {
   const linhas = Array.from(document.querySelectorAll("#tabela tbody tr")).map(tr => ({
     mes: tr.getAttribute("data-mes"),
+    kmInicial: tr.getAttribute("data-km-inicial"),
+    kmFinal: tr.getAttribute("data-km-final"),
     celulas: Array.from(tr.querySelectorAll("td")).slice(0, 13).map(td => td.textContent)
   }));
   localStorage.setItem("viagens", JSON.stringify(linhas));
 }
+
 function carregarDadosSalvos() {
   const dados = JSON.parse(localStorage.getItem("viagens"));
   if (!dados) return;
   dados.forEach(item => {
     const row = document.createElement("tr");
     row.setAttribute("data-mes", item.mes);
+    row.setAttribute("data-km-inicial", item.kmInicial || "0");
+    row.setAttribute("data-km-final", item.kmFinal || "0");
     row.innerHTML = item.celulas.map(c => `<td>${c}</td>`).join("") +
       `<td><button onclick="editarViagem(this)">Editar</button> <button onclick="excluirViagem(this)">Excluir</button></td>`;
     document.querySelector("#tabela tbody").appendChild(row);
@@ -205,12 +211,14 @@ function carregarDadosSalvos() {
   atualizarResumo();
   preencherFiltroComMesAtual();
 }
+
 function limparTabela() {
   if (!confirm("Tem certeza que deseja apagar todos os dados?")) return;
   document.querySelector("#tabela tbody").innerHTML = "";
   localStorage.removeItem("viagens");
   atualizarResumo();
 }
+
 function atualizarResumo() {
   const linhas = document.querySelectorAll("#tabela tbody tr");
   let totalViagens = 0, totalKm = 0, totalFrete = 0, totalGastos = 0, totalSaldo = 0;
@@ -231,12 +239,14 @@ function atualizarResumo() {
   document.getElementById("resumo-gastos").textContent = totalGastos.toFixed(2);
   document.getElementById("resumo-saldo").textContent = totalSaldo.toFixed(2);
 }
+
 function preencherFiltroComMesAtual() {
   const hoje = new Date();
   const anoMesAtual = hoje.toISOString().slice(0, 7);
   document.getElementById("filtroMes").value = anoMesAtual;
   filtrarPorMes();
 }
+
 function filtrarPorMes() {
   const filtro = document.getElementById("filtroMes").value;
   const linhas = document.querySelectorAll("#tabela tbody tr");
@@ -245,6 +255,7 @@ function filtrarPorMes() {
   });
   atualizarResumo();
 }
+
 carregarDadosSalvos();
 </script>
 </body>
