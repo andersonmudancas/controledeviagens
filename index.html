@@ -3,53 +3,53 @@
 <head>
   <meta charset="UTF-8" />
   <title>Controle de Viagens</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; background: #eef2f3; }
-    .formulario { display: flex; flex-wrap: wrap; gap: 10px; }
-    .formulario input, .formulario button, .formulario select {
-      flex: 1 1 250px;
-      min-width: 200px;
-      padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
+    body { font-family: Arial, sans-serif; margin: 0; background: #eef2f3; }
+    .tabs { display: flex; background: #4caf50; }
+    .tabs button {
+      flex: 1; padding: 15px; background: #4caf50; color: white; border: none;
+      cursor: pointer; transition: 0.3s; font-size: 16px;
+    }
+    .tabs button.active { background: #388e3c; }
+    .tab-content { display: none; padding: 20px; }
+    .tab-content.active { display: block; }
+    .formulario {
+      display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px;
+    }
+    .formulario input, .formulario button {
+      flex: 1 1 250px; min-width: 200px;
+      padding: 10px; border: 1px solid #ccc; border-radius: 8px;
     }
     button {
-      background-color: #4caf50;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: 0.3s;
+      background-color: #4caf50; color: white; border: none;
+      border-radius: 8px; cursor: pointer; transition: 0.3s;
     }
     button:hover { background-color: #45a049; }
     #resumo {
-      background: #f9f9f9;
-      padding: 20px;
-      border-radius: 10px;
+      background: #f9f9f9; padding: 20px; border-radius: 10px;
       box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
-      margin-top: 20px;
     }
     table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
-      background: white;
-      border-radius: 10px;
-      overflow-x: auto;
-      display: block;
+      width: 100%; border-collapse: collapse; background: white;
+      border-radius: 10px; overflow-x: auto; display: block;
       box-shadow: 0px 0px 10px rgba(0,0,0,0.05);
     }
     th, td {
-      border: 1px solid #ccc;
-      padding: 8px;
-      text-align: left;
-      white-space: nowrap;
+      border: 1px solid #ccc; padding: 8px;
+      text-align: left; white-space: nowrap;
     }
   </style>
 </head>
 <body>
-  <h1>Controle de Viagens</h1>
+
+<div class="tabs">
+  <button onclick="abrirAba(0)" class="active">Cadastro</button>
+  <button onclick="abrirAba(1)">Tabela</button>
+  <button onclick="abrirAba(2)">Resumo</button>
+</div>
+
+<div class="tab-content active">
   <div class="formulario">
     <input id="cliente" placeholder="Nome do Cliente" />
     <input id="contato" placeholder="Contato" />
@@ -64,14 +64,35 @@
     <input id="ajudante" type="number" placeholder="Ajudante (R$)" />
     <input id="frete" type="number" placeholder="Valor do Frete (R$)" />
     <button id="botao-adicionar" onclick="adicionarOuSalvarViagem()">Adicionar Viagem</button>
-    <button onclick="exportarParaExcel()">Exportar para Excel</button>
+  </div>
+</div>
+
+<div class="tab-content">
+  <div class="formulario">
+    <input id="filtroMes" type="month" onchange="filtrarPorMes()" />
+    <button onclick="exportarParaExcel()">Exportar Excel</button>
     <button onclick="limparTabela()">Limpar Tabela</button>
   </div>
-  <div class="formulario" style="margin-top: 20px;">
-    <input id="filtroMes" type="month" onchange="filtrarPorMes()" />
+  <table id="tabela">
+    <thead>
+      <tr>
+        <th>Cliente</th><th>Contato</th><th>Data</th><th>Origem → Destino</th><th>KM Rodado</th>
+        <th>Combustível</th><th>Pedágios</th><th>Outros</th><th>Ajudante</th>
+        <th>Gastos Totais</th><th>Custo/KM</th><th>Frete</th><th>Saldo Final</th><th>Ação</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<div class="tab-content">
+  <div class="formulario">
+    <input type="date" id="filtroInicioResumo" onchange="atualizarResumo()" />
+    <input type="date" id="filtroFimResumo" onchange="atualizarResumo()" />
+    <button onclick="limparFiltroResumo()">Todos os Meses</button>
   </div>
   <div id="resumo">
-    <h2>Resumo</h2>
+    <h2>Resumo Geral</h2>
     <p>Total de Viagens: <span id="resumo-viagens">0</span></p>
     <p>Total de KM Rodado: <span id="resumo-km">0</span> km</p>
     <p>Média de Custo por KM: R$ <span id="resumo-media-km">0.00</span></p>
@@ -79,17 +100,18 @@
     <p>Total de Gastos: R$ <span id="resumo-gastos">0.00</span></p>
     <p>Total de Saldo Final: R$ <span id="resumo-saldo">0.00</span></p>
   </div>
-  <table id="tabela">
-    <thead>
-      <tr>
-        <th>Cliente</th><th>Contato</th><th>Data</th><th>Origem → Destino</th><th>KM Rodado</th><th>Combustível</th><th>Pedágios</th><th>Outros</th><th>Ajudante</th><th>Gastos Totais</th><th>Custo/KM</th><th>Frete</th><th>Saldo Final</th><th>Ação</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+</div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
 let linhaEditando = null;
+
+function abrirAba(indice) {
+  document.querySelectorAll(".tabs button").forEach((btn, i) =>
+    btn.classList.toggle("active", i === indice));
+  document.querySelectorAll(".tab-content").forEach((tab, i) =>
+    tab.classList.toggle("active", i === indice));
+}
 
 function adicionarOuSalvarViagem() {
   const cliente = document.getElementById("cliente").value;
@@ -105,11 +127,13 @@ function adicionarOuSalvarViagem() {
   const ajudante = parseFloat(document.getElementById("ajudante").value);
   const frete = parseFloat(document.getElementById("frete").value);
 
-  if (isNaN(kmInicial) || isNaN(kmFinal) || isNaN(combustivel) || isNaN(pedagios) || isNaN(outros) || isNaN(ajudante) || isNaN(frete)) {
-    alert("Por favor, preencha todos os campos corretamente."); return;
+  if ([kmInicial, kmFinal, combustivel, pedagios, outros, ajudante, frete].some(isNaN)) {
+    alert("Preencha todos os campos corretamente.");
+    return;
   }
   if (kmFinal < kmInicial) {
-    alert("KM Final não pode ser menor que o KM Inicial."); return;
+    alert("KM Final não pode ser menor que KM Inicial.");
+    return;
   }
 
   const kmRodado = kmFinal - kmInicial;
@@ -121,13 +145,10 @@ function adicionarOuSalvarViagem() {
 
   const html = `
     <td>${cliente}</td><td>${contato}</td><td>${dataFormatada}</td><td>${origem} → ${destino}</td>
-    <td>${kmRodado} km</td><td>R$ ${combustivel.toFixed(2)}</td><td>R$ ${pedagios.toFixed(2)}</td>
+    <td>${kmRodado}</td><td>R$ ${combustivel.toFixed(2)}</td><td>R$ ${pedagios.toFixed(2)}</td>
     <td>R$ ${outros.toFixed(2)}</td><td>R$ ${ajudante.toFixed(2)}</td><td>R$ ${totalGastos.toFixed(2)}</td>
     <td>R$ ${custoPorKm}</td><td>R$ ${frete.toFixed(2)}</td><td>R$ ${saldoFinal}</td>
-    <td>
-      <button onclick="editarViagem(this)">Editar</button>
-      <button onclick="excluirViagem(this)">Excluir</button>
-    </td>`;
+    <td><button onclick="editarViagem(this)">Editar</button> <button onclick="excluirViagem(this)">Excluir</button></td>`;
 
   if (linhaEditando) {
     linhaEditando.innerHTML = html;
@@ -153,27 +174,26 @@ function adicionarOuSalvarViagem() {
 function editarViagem(botao) {
   const tr = botao.parentElement.parentElement;
   const c = tr.querySelectorAll("td");
+  const data = c[2].textContent.split("/");
   document.getElementById("cliente").value = c[0].textContent;
   document.getElementById("contato").value = c[1].textContent;
-  const data = c[2].textContent.split("/");
   document.getElementById("data").value = `${data[2]}-${data[1]}-${data[0]}`;
-  const origemDestino = c[3].textContent.split(" → ");
-  document.getElementById("origem").value = origemDestino[0];
-  document.getElementById("destino").value = origemDestino[1];
-  document.getElementById("kmInicial").value = tr.getAttribute("data-km-inicial") || "0";
-  document.getElementById("kmFinal").value = tr.getAttribute("data-km-final") || "0";
+  const od = c[3].textContent.split(" → ");
+  document.getElementById("origem").value = od[0];
+  document.getElementById("destino").value = od[1];
+  document.getElementById("kmInicial").value = tr.getAttribute("data-km-inicial");
+  document.getElementById("kmFinal").value = tr.getAttribute("data-km-final");
   document.getElementById("combustivel").value = parseFloat(c[5].textContent.replace("R$ ", ""));
   document.getElementById("pedagios").value = parseFloat(c[6].textContent.replace("R$ ", ""));
   document.getElementById("outros").value = parseFloat(c[7].textContent.replace("R$ ", ""));
   document.getElementById("ajudante").value = parseFloat(c[8].textContent.replace("R$ ", ""));
   document.getElementById("frete").value = parseFloat(c[11].textContent.replace("R$ ", ""));
-
   linhaEditando = tr;
   document.getElementById("botao-adicionar").textContent = "Salvar Alterações";
 }
 
 function excluirViagem(botao) {
-  if (confirm("Deseja realmente excluir esta viagem?")) {
+  if (confirm("Deseja excluir esta viagem?")) {
     botao.parentElement.parentElement.remove();
     salvarDadosLocalmente();
     atualizarResumo();
@@ -202,61 +222,66 @@ function carregarDadosSalvos() {
   dados.forEach(item => {
     const row = document.createElement("tr");
     row.setAttribute("data-mes", item.mes);
-    row.setAttribute("data-km-inicial", item.kmInicial || "0");
-    row.setAttribute("data-km-final", item.kmFinal || "0");
+    row.setAttribute("data-km-inicial", item.kmInicial);
+    row.setAttribute("data-km-final", item.kmFinal);
     row.innerHTML = item.celulas.map(c => `<td>${c}</td>`).join("") +
       `<td><button onclick="editarViagem(this)">Editar</button> <button onclick="excluirViagem(this)">Excluir</button></td>`;
     document.querySelector("#tabela tbody").appendChild(row);
   });
+  preencherResumoMesAtual();
   atualizarResumo();
-  preencherFiltroComMesAtual();
 }
 
-function limparTabela() {
-  if (!confirm("Tem certeza que deseja apagar todos os dados?")) return;
-  document.querySelector("#tabela tbody").innerHTML = "";
-  localStorage.removeItem("viagens");
+function preencherResumoMesAtual() {
+  const hoje = new Date();
+  const primeiroDia = new Date(hoje.getFullYear(), hoje.getMonth(), 1).toISOString().split('T')[0];
+  const ultimoDia = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).toISOString().split('T')[0];
+  document.getElementById("filtroInicioResumo").value = primeiroDia;
+  document.getElementById("filtroFimResumo").value = ultimoDia;
+}
+
+function limparFiltroResumo() {
+  document.getElementById("filtroInicioResumo").value = "";
+  document.getElementById("filtroFimResumo").value = "";
   atualizarResumo();
 }
 
 function atualizarResumo() {
-  const linhas = document.querySelectorAll("#tabela tbody tr");
+  const inicio = document.getElementById("filtroInicioResumo").value ? new Date(document.getElementById("filtroInicioResumo").value) : null;
+  const fim = document.getElementById("filtroFimResumo").value ? new Date(document.getElementById("filtroFimResumo").value) : null;
+
   let totalViagens = 0, totalKm = 0, totalFrete = 0, totalGastos = 0, totalSaldo = 0;
-  linhas.forEach(linha => {
-    if (linha.style.display === "none") return;
+  document.querySelectorAll("#tabela tbody tr").forEach(linha => {
     const celulas = linha.querySelectorAll("td");
+    const dataTexto = celulas[2].textContent;
+    const [dia, mes, ano] = dataTexto.split("/");
+    const dataLinha = new Date(`${ano}-${mes}-${dia}`);
+    if ((inicio && dataLinha < inicio) || (fim && dataLinha > fim)) return;
+
     totalViagens++;
-    const km = parseFloat(celulas[4].textContent);
-    const gasto = parseFloat(celulas[9].textContent.replace("R$ ", ""));
-    const frete = parseFloat(celulas[11].textContent.replace("R$ ", ""));
-    const saldo = parseFloat(celulas[12].textContent.replace("R$ ", ""));
-    totalKm += km; totalGastos += gasto; totalFrete += frete; totalSaldo += saldo;
+    totalKm += parseFloat(celulas[4].textContent);
+    totalGastos += parseFloat(celulas[9].textContent.replace("R$ ", ""));
+    totalFrete += parseFloat(celulas[11].textContent.replace("R$ ", ""));
+    totalSaldo += parseFloat(celulas[12].textContent.replace("R$ ", ""));
   });
+
   document.getElementById("resumo-viagens").textContent = totalViagens;
   document.getElementById("resumo-km").textContent = totalKm;
-  document.getElementById("resumo-media-km").textContent = (totalKm > 0 ? (totalGastos / totalKm).toFixed(2) : "0.00");
+  document.getElementById("resumo-media-km").textContent = totalKm > 0 ? (totalGastos / totalKm).toFixed(2) : "0.00";
   document.getElementById("resumo-frete").textContent = totalFrete.toFixed(2);
   document.getElementById("resumo-gastos").textContent = totalGastos.toFixed(2);
   document.getElementById("resumo-saldo").textContent = totalSaldo.toFixed(2);
 }
 
-function preencherFiltroComMesAtual() {
-  const hoje = new Date();
-  const anoMesAtual = hoje.toISOString().slice(0, 7);
-  document.getElementById("filtroMes").value = anoMesAtual;
-  filtrarPorMes();
-}
-
 function filtrarPorMes() {
   const filtro = document.getElementById("filtroMes").value;
-  const linhas = document.querySelectorAll("#tabela tbody tr");
-  linhas.forEach(linha => {
-    linha.style.display = (filtro === "" || linha.getAttribute("data-mes") === filtro) ? "" : "none";
+  document.querySelectorAll("#tabela tbody tr").forEach(linha => {
+    linha.style.display = (!filtro || linha.getAttribute("data-mes") === filtro) ? "" : "none";
   });
-  atualizarResumo();
 }
 
 carregarDadosSalvos();
 </script>
+
 </body>
 </html>
