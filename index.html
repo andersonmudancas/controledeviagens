@@ -39,16 +39,21 @@
       border: 1px solid #ccc; padding: 8px;
       text-align: left; white-space: nowrap;
     }
+    @media (max-width: 600px) {
+      .formulario input, .formulario button {
+        flex: 1 1 100%;
+      }
+    }
   </style>
 </head>
 <body>
 
 <div class="tabs">
-  <button onclick="abrirAba(0)" class="active">Cadastro</button>
-  <button onclick="abrirAba(1)">Tabela</button>
-  <button onclick="abrirAba(2)">Resumo</button>
+  <button onclick="abrirAba(0)" class="active">Viagens</button>
+  <button onclick="abrirAba(1)">Resumo</button>
 </div>
 
+<!-- Aba 0: Cadastro + Tabela -->
 <div class="tab-content active">
   <div class="formulario">
     <input id="cliente" placeholder="Nome do Cliente" />
@@ -65,14 +70,13 @@
     <input id="frete" type="number" placeholder="Valor do Frete (R$)" />
     <button id="botao-adicionar" onclick="adicionarOuSalvarViagem()">Adicionar Viagem</button>
   </div>
-</div>
 
-<div class="tab-content">
   <div class="formulario">
     <input id="filtroMes" type="month" onchange="filtrarPorMes()" />
     <button onclick="exportarParaExcel()">Exportar Excel</button>
     <button onclick="limparTabela()">Limpar Tabela</button>
   </div>
+
   <table id="tabela">
     <thead>
       <tr>
@@ -85,6 +89,7 @@
   </table>
 </div>
 
+<!-- Aba 1: Resumo -->
 <div class="tab-content">
   <div class="formulario">
     <input type="date" id="filtroInicioResumo" onchange="atualizarResumo()" />
@@ -127,7 +132,8 @@ function adicionarOuSalvarViagem() {
   const ajudante = parseFloat(document.getElementById("ajudante").value);
   const frete = parseFloat(document.getElementById("frete").value);
 
-  if ([kmInicial, kmFinal, combustivel, pedagios, outros, ajudante, frete].some(isNaN)) {
+  if (!cliente || !contato || !data || !origem || !destino ||
+      [kmInicial, kmFinal, combustivel, pedagios, outros, ajudante, frete].some(isNaN)) {
     alert("Preencha todos os campos corretamente.");
     return;
   }
@@ -280,8 +286,17 @@ function filtrarPorMes() {
   });
 }
 
+function limparTabela() {
+  if (confirm("Deseja realmente apagar todos os dados?")) {
+    document.querySelector("#tabela tbody").innerHTML = "";
+    localStorage.removeItem("viagens");
+    atualizarResumo();
+  }
+}
+
 carregarDadosSalvos();
 </script>
 
 </body>
 </html>
+
